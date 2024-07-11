@@ -36,7 +36,7 @@ import { findById as documentFindById, paginatedForPathWithEnrichment } from '..
 import { elCount, elFindByIds, elUpdateElement } from '../database/engine';
 import { generateStandardId, getInstanceIds } from '../schema/identifier';
 import { askEntityExport, askListExport, exportTransformFilters } from './stix';
-import { isEmptyField, isNotEmptyField, READ_ENTITIES_INDICES, READ_INDEX_INFERRED_ENTITIES } from '../database/utils';
+import { isEmptyField, isNotEmptyField, READ_DATA_INDICES, READ_ENTITIES_INDICES, READ_INDEX_INFERRED_ENTITIES } from '../database/utils';
 import { STIX_CORE_RELATIONSHIPS } from '../schema/stixCoreRelationship';
 import { ENTITY_TYPE_CONTAINER_CASE } from '../modules/case/case-types';
 import { getEntitySettingFromCache } from '../modules/entitySetting/entitySetting-utils';
@@ -311,7 +311,7 @@ export const stixCoreObjectsConnectedNumber = (context, user, stixCoreObject) =>
     }],
     filterGroups: [],
   };
-  return elCount(context, user, READ_ENTITIES_INDICES, { filters });
+  return elCount(context, user, READ_DATA_INDICES, { filters });
 };
 
 export const stixCoreObjectsDistribution = async (context, user, args) => {
