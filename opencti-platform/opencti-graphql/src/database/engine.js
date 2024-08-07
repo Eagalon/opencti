@@ -544,6 +544,9 @@ export const buildDataRestrictions = async (context, user, opts = {}) => {
       must.push({ bool: { should, minimum_should_match: 1 } });
     }
     // endregion
+  } else {
+    // I'm bypass, I just need to filter the authorized_members
+    must.push(...userAccess);
   }
   return { must, must_not };
 };
