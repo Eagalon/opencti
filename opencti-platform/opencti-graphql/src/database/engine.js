@@ -404,7 +404,7 @@ export const buildDataRestrictions = async (context, user, opts = {}) => {
     return { must, must_not };
   }
   // check user access
-  must.push(...buildUserMemberAccessFilter(user, opts?.includeAuthorities));
+  const userAccess = buildUserMemberAccessFilter(user, opts?.includeAuthorities);
   // If user have bypass, no need to check restrictions
   if (!isBypassUser(user)) {
     // region Handle marking restrictions
@@ -486,6 +486,7 @@ export const buildDataRestrictions = async (context, user, opts = {}) => {
       if (user.inside_platform_organization) {
         // Data are visible independently of the organizations
         // Nothing to restrict.
+        must.push(...userAccess);
       } else {
         // Data with Empty granted_refs are not visible
         // Data with granted_refs users that participate to at least one
@@ -500,10 +501,29 @@ export const buildDataRestrictions = async (context, user, opts = {}) => {
         }
         // For tasks
         should.push({ match: { 'initiator_id.keyword': user.internal_id } });
+
         // Finally build the bool should search
-        must.push({ bool: { should, minimum_should_match: 1 } });
+        if (userAccess.length === 0) {
+          must.push({ bool: { should, minimum_should_match: 1 } });
+        } else {
+          must.push({
+            bool: {
+              should: [
+                {
+                  bool: {
+                    must_not: { exists: { field: 'authorized_members' } },
+                    should,
+                  },
+                },
+                ...userAccess,
+              ],
+              minimum_should_match: 1,
+            },
+          });
+        }
       }
     } else {
+      must.push(...userAccess);
       // Data with Empty granted_refs are granted to everyone
       const should = [excludedEntityMatches];
       should.push({ bool: { must_not: [{ exists: { field: buildRefRelationSearchKey(RELATION_GRANTED_TO) } }] } });
@@ -622,7 +642,8 @@ const elCreateLifecyclePolicy = async () => {
             priority: 100
           }
         }
-      } }).catch((e) => {
+      }
+    }).catch((e) => {
       throw DatabaseError('Creating lifecycle policy fail', { cause: e });
     });
   }

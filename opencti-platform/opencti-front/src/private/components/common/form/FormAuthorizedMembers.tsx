@@ -66,7 +66,6 @@ const FormAuthorizedMembers = ({
                   name="authorizedMembers"
                   component={AuthorizedMembersField}
                   owner={owner}
-                  showAllMembersLine
                   canDeactivate={canDeactivate}
                 />
               )}

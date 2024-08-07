@@ -1,4 +1,5 @@
 import { Option } from '@components/common/form/ReferenceField';
+import useGranted, { BYPASS } from './hooks/useGranted';
 
 export const INPUT_AUTHORIZED_MEMBERS = 'authorized_members';
 
@@ -54,8 +55,9 @@ export const authorizedMembersToOptions = (
     });
 };
 
-export const getCurrentUserAccessRight = (userAccessRight: string | null | undefined) => {
-  const canManage = userAccessRight === 'admin';
+export const useGetCurrentUserAccessRight = (userAccessRight: string | null | undefined) => {
+  const isBypass = useGranted([BYPASS]);
+  const canManage = userAccessRight === 'admin' || isBypass;
   const canEdit = canManage || userAccessRight === 'edit';
   const canView = canManage || canEdit || userAccessRight === 'view';
   return { canManage, canEdit, canView };

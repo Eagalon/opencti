@@ -118,7 +118,6 @@ const DefaultValueField = ({
         name={name}
         component={AuthorizedMembersField}
         style={fieldSpacingContainerStyle}
-        showAllMembersLine
         showCreatorLine
         canDeactivate
         disabled={disabled}

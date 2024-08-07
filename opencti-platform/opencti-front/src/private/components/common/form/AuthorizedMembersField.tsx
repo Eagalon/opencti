@@ -70,14 +70,15 @@ const AuthorizedMembersField = ({
   form,
   field,
   owner,
-  showAllMembersLine = false,
   showCreatorLine = false,
   canDeactivate = false,
 }: AuthorizedMembersFieldProps) => {
   const { t_i18n } = useFormatter();
-  const { me } = useAuth();
+  const { me, settings } = useAuth();
   const { setFieldValue } = form;
   const { name, value } = field;
+
+  const showAllMembersLine = !settings.platform_organization?.id;
 
   // Value in sync with internal Formik field 'applyAccesses'.
   // Require to use a state in addition to the Formik field because
