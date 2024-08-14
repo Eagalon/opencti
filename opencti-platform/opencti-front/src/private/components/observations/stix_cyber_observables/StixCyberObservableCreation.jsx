@@ -821,7 +821,7 @@ const StixCyberObservableCreation = ({
                         </Button>
                         <Button
                           variant={contextual ? 'text' : 'contained'}
-                          color="secondary"
+                          color="primary"
                           onClick={submitForm}
                           disabled={isSubmitting}
                           classes={{ root: classes.button }}
@@ -895,6 +895,7 @@ const StixCyberObservableCreation = ({
   };
 
   const renderContextual = () => {
+    console.log('open contextual : ', open);
     return (
       <div style={{ display: display ? 'block' : 'none' }}>
         {!speeddial && (
