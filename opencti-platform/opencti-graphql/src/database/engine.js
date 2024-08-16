@@ -405,6 +405,7 @@ export const buildDataRestrictions = async (context, user, opts = {}) => {
   }
   // check user access
   const userAccess = buildUserMemberAccessFilter(user, opts?.includeAuthorities);
+  const userAccessWithoutExistency = buildUserMemberAccessFilter(user, opts?.includeAuthorities, true);
   // If user have bypass, no need to check restrictions
   if (!isBypassUser(user)) {
     // region Handle marking restrictions
@@ -515,7 +516,7 @@ export const buildDataRestrictions = async (context, user, opts = {}) => {
                     should,
                   },
                 },
-                ...userAccess,
+                ...userAccessWithoutExistency,
               ],
               minimum_should_match: 1,
             },
@@ -551,17 +552,17 @@ export const buildDataRestrictions = async (context, user, opts = {}) => {
   return { must, must_not };
 };
 
-export const buildUserMemberAccessFilter = (user, includeAuthorities = false) => {
+export const buildUserMemberAccessFilter = (user, includeAuthorities = false, excludeExistency = false) => {
   const capabilities = user.capabilities.map((c) => c.name);
   if (includeAuthorities && capabilities.includes(BYPASS)) {
     return [];
   }
   const userAccessIds = computeUserMemberAccessIds(user);
   // if access_users exists, it should have the user access ids
-  const authorizedFilters = [
+  const authorizedFilters = !excludeExistency ? [
     { bool: { must_not: { exists: { field: 'authorized_members' } } } },
     { terms: { 'authorized_members.id.keyword': [MEMBER_ACCESS_ALL, ...userAccessIds] } },
-  ];
+  ] : [{ terms: { 'authorized_members.id.keyword': [MEMBER_ACCESS_ALL, ...userAccessIds] } }];
   if (includeAuthorities) {
     const roleIds = user.roles.map((r) => r.id);
     const owners = [...userAccessIds, ...capabilities, ...roleIds];
