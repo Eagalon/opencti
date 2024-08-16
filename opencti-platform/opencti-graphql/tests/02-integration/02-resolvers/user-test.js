@@ -179,7 +179,7 @@ const DELETE_GROUP_QUERY = gql`
   }
 `;
 
-describe.skip('User resolver standard behavior', () => {
+describe('User resolver standard behavior', () => {
   let userInternalId;
   let groupInternalId;
   let userStandardId;
@@ -610,7 +610,7 @@ describe.skip('User resolver standard behavior', () => {
   });
 });
 
-describe.skip('User list members query behavior', () => {
+describe('User list members query behavior', () => {
   it('Should user lists all members', async () => {
     const queryResult = await editorQuery({ query: LIST_MEMBERS_QUERY });
     expect(queryResult.data.members.edges.length).toEqual(22);
@@ -620,7 +620,7 @@ describe.skip('User list members query behavior', () => {
   });
 });
 
-describe.skip('User creator completion', () => {
+describe('User creator completion', () => {
   it('Should sector upsert accumulate creator_id', async () => {
     const SECTOR_CREATE_QUERY = gql`
       mutation SectorAdd($input: SectorAddInput!) {
@@ -644,7 +644,7 @@ describe.skip('User creator completion', () => {
   });
 });
 
-describe.skip('User has no capability query behavior', () => {
+describe('User has no capability query behavior', () => {
   const GROUP_UPDATE_QUERY = gql`
     mutation GroupEdit($id: ID!, $input: [EditInput]!) {
       groupEdit(id: $id) {
@@ -706,7 +706,7 @@ describe('User has no settings capability and is organization admin query behavi
   let testOrganizationId;
   let amberGroupId;
   afterAll(async () => {
-    it.skip('should remove the capability to administrate the Organization', async () => {
+    it('should remove the capability to administrate the Organization', async () => {
       const ORGA_ADMIN_DELETE_QUERY = gql`
         mutation OrganizationAdminRemove($id: ID!, $memberId: String!) {
           organizationAdminRemove(id: $id, memberId: $memberId) {
@@ -732,7 +732,7 @@ describe('User has no settings capability and is organization admin query behavi
       expect(editorUserQueryResult.data.user.length).toEqual();
       expect(editorUserQueryResult.data.user.capabilities).not.includes(VIRTUAL_ORGANIZATION_ADMIN);
     });
-    it.skip('should remove granted_groups to TEST_ORGANIZATION', async () => {
+    it('should remove granted_groups to TEST_ORGANIZATION', async () => {
       const UPDATE_QUERY = gql`
         mutation OrganizationEdit($id: ID!, $input: [EditInput]!) {
           organizationFieldPatch(id: $id, input: $input) {
@@ -827,7 +827,7 @@ describe('User has no settings capability and is organization admin query behavi
 
     expect(user.data.userAdd.name).toEqual('User');
   });
-  it.skip('should update user from its own organization', async () => {
+  it('should update user from its own organization', async () => {
     const UPDATE_QUERY = gql`
       mutation UserEdit($id: ID!, $input: [EditInput]!) {
         userEdit(id: $id) {
@@ -843,7 +843,7 @@ describe('User has no settings capability and is organization admin query behavi
     });
     expect(queryResult.data.userEdit.fieldPatch.account_status).toEqual('Inactive');
   });
-  it.skip('should user deleted', async () => {
+  it('should user deleted', async () => {
     // Delete user
     await editorQuery({
       query: DELETE_QUERY,
