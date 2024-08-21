@@ -67,46 +67,66 @@ const StixDomainObjectAttackPatternsKillChainLines: FunctionComponent<StixDomain
   type NonNullableCoursesOfAction = NonNullable<NonNullable<NonNullable<AttackPatternNode['coursesOfAction']>['edges']>[number]>;
   interface FormattedAttackPattern extends AttackPatternNode {
     killChainPhase: NonNullable<AttackPatternNode['killChainPhases']>[number];
+    kill_chain_name: string;
     subattackPatterns_text: string;
+  }
+
+  interface KillChainPhaseElement {
+    id: string;
+    phase_name: string;
+    kill_chain_name: string;
+    x_opencti_order: number;
+    attackPatterns: FormattedAttackPattern[];
   }
 
   // Extract all kill chain phases
   const filterByKeyword = (n: FormattedAttackPattern) => searchTerm === ''
-      || n.name.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1
-      || (n.description ?? '')
-        .toLowerCase()
-        .indexOf(searchTerm.toLowerCase()) !== -1
-      || (n.x_mitre_id ?? '')
-        .toLowerCase()
-        .indexOf(searchTerm.toLowerCase()) !== -1
-      || (n.subattackPatterns_text ?? '')
-        .toLowerCase()
-        .indexOf(searchTerm.toLowerCase()) !== -1;
+    || n.name.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1
+    || (n.description ?? '')
+      .toLowerCase()
+      .indexOf(searchTerm.toLowerCase()) !== -1
+    || (n.x_mitre_id ?? '')
+      .toLowerCase()
+      .indexOf(searchTerm.toLowerCase()) !== -1
+    || (n.subattackPatterns_text ?? '')
+      .toLowerCase()
+      .indexOf(searchTerm.toLowerCase()) !== -1;
+
   const killChainPhases = uniq((data.attackPatterns?.edges ?? [])
     .map((n) => (n.node.killChainPhases && n.node.killChainPhases.length > 0
       ? n.node.killChainPhases[0]
-      : { id: 'unknown', phase_name: t_i18n('Unknown'), x_opencti_order: 99 })));
+      : { id: 'unknown', phase_name: t_i18n('Unknown'), kill_chain_name: t_i18n('Unknown'), x_opencti_order: 99 })));
+
   const killChainPhasesById = R.indexBy(R.prop('id'), killChainPhases);
+
   const formattedAttackPatterns = (data.attackPatterns?.edges ?? [])
     .map((n) => n.node)
     .map((n) => ({
       ...n,
       killChainPhase: n.killChainPhases && n.killChainPhases.length > 0
-        ? n.killChainPhases[0]
-        : { id: 'unknown', phase_name: t_i18n('Unknown'), x_opencti_order: 99 },
+        ? { ...n.killChainPhases[0], kill_chain_name: n.killChainPhases[0].kill_chain_name ?? t_i18n('Unknown') }
+        : { id: 'unknown', phase_name: t_i18n('Unknown'), kill_chain_name: t_i18n('Unknown'), x_opencti_order: 99 },
+      kill_chain_name: n.killChainPhases && n.killChainPhases.length > 0 ? n.killChainPhases[0].kill_chain_name : t_i18n('Unknown'),
       subattackPatterns_text: (n.subAttackPatterns?.edges ?? [])
         .map((o) => `${o.node.x_mitre_id} ${o.node.name} ${o.node.description}`)
         .join(' | '),
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
     .filter(filterByKeyword);
+
   const groupedAttackPatterns = R.groupBy((n) => n.killChainPhase.id, formattedAttackPatterns);
+
   const finalAttackPatternsElement = R.pipe(
-    R.mapObjIndexed((value, key) => R.assoc('attackPatterns', value, killChainPhasesById[key])),
+    R.mapObjIndexed((value, key) => R.assoc('attackPatterns', value, {
+      ...killChainPhasesById[key],
+      kill_chain_name: killChainPhasesById[key].kill_chain_name,
+    })),
     R.values,
-  )(groupedAttackPatterns) as { id: string, phase_name: string, x_opencti_order: number, attackPatterns: AttackPatternNode[] }[];
+  )(groupedAttackPatterns) as KillChainPhaseElement[];
+
   const sortedAttackPatternsElement = finalAttackPatternsElement
     .sort((a, b) => (b.x_opencti_order ?? Number.POSITIVE_INFINITY) - (a.x_opencti_order ?? Number.POSITIVE_INFINITY));
+
   return (
     <div>
       <div className={classes.container} id="container">
@@ -120,7 +140,7 @@ const StixDomainObjectAttackPatternsKillChainLines: FunctionComponent<StixDomain
                 <ListItemIcon>
                   <Launch color="primary" role="img" />
                 </ListItemIcon>
-                <ListItemText primary={element.phase_name} />
+                <ListItemText primary={`[${element.kill_chain_name}] - ${element.phase_name}`} />
                 <ListItemSecondaryAction>
                   <IconButton
                     onClick={() => handleToggleLine(element.id)}
@@ -152,10 +172,10 @@ const StixDomainObjectAttackPatternsKillChainLines: FunctionComponent<StixDomain
                             component={coursesOfAction ? 'ul' : Link}
                             to={coursesOfAction ? undefined : link}
                             onClick={
-                                coursesOfAction
-                                  ? () => handleToggleLine(attackPattern.id)
-                                  : undefined
-                              }
+                              coursesOfAction
+                                ? () => handleToggleLine(attackPattern.id)
+                                : undefined
+                            }
                           >
                             <ListItemIcon>
                               <LockPattern color="primary" role="img" />
@@ -168,25 +188,25 @@ const StixDomainObjectAttackPatternsKillChainLines: FunctionComponent<StixDomain
                                   </strong>{' '}
                                   - {attackPattern.name}
                                 </span>
-                                }
+                                        }
                               secondary={
-                                  attackPattern.description
-                                  && attackPattern.description.length > 0 ? (
-                                    <MarkdownDisplay
-                                      content={attackPattern.description}
-                                      remarkGfmPlugin={true}
-                                      commonmark={true}
-                                    />
-                                    ) : (
-                                      t_i18n('No description of this usage')
-                                    )
-                                }
+                                attackPattern.description
+                                && attackPattern.description.length > 0 ? (
+                                  <MarkdownDisplay
+                                    content={attackPattern.description}
+                                    remarkGfmPlugin={true}
+                                    commonmark={true}
+                                  />
+                                  ) : (
+                                    t_i18n('No description of this usage')
+                                  )
+                              }
                             />
                             <ItemMarkings
                               variant="inList"
                               markingDefinitions={
-                                  attackPattern.objectMarking ?? []
-                                }
+                                attackPattern.objectMarking ?? []
+                              }
                               limit={1}
                             />
                             <div className={classes.nested} >
@@ -214,58 +234,58 @@ const StixDomainObjectAttackPatternsKillChainLines: FunctionComponent<StixDomain
                             </div>
                           </ListItemButton>
                           {coursesOfAction && (
-                            <Collapse
-                              in={expandedLines[attackPattern.id] !== false}
-                            >
-                              <List>
-                                {((attackPattern.coursesOfAction?.edges ?? [])
-                                  .filter((n) => !!n) as NonNullableCoursesOfAction[])
-                                  .map(
-                                    (courseOfActionEdge) => {
-                                      const courseOfAction = courseOfActionEdge.node;
-                                      const courseOfActionLink = `/dashboard/techniques/courses_of_action/${courseOfAction.id}`;
-                                      return (
-                                        <ListItem
-                                          key={courseOfAction.id}
-                                          classes={{ root: classes.nested2 }}
-                                          divider={true}
-                                          button={true}
-                                          dense={true}
-                                          component={Link}
-                                          to={courseOfActionLink}
-                                        >
-                                          <ListItemIcon>
-                                            <ProgressWrench
-                                              color="primary"
-                                              role="img"
-                                            />
-                                          </ListItemIcon>
-                                          <ListItemText
-                                            primary={courseOfAction.name}
-                                            secondary={
-                                              courseOfAction.description
-                                              && courseOfAction.description
-                                                .length > 0 ? (
-                                                  <MarkdownDisplay
-                                                    content={
-                                                    courseOfAction.description
-                                                  }
-                                                    remarkGfmPlugin={true}
-                                                    commonmark={true}
-                                                  ></MarkdownDisplay>
-                                                ) : (
-                                                  t_i18n(
-                                                    'No description of this course of action',
-                                                  )
-                                                )
-                                            }
+                          <Collapse
+                            in={expandedLines[attackPattern.id] !== false}
+                          >
+                            <List>
+                              {((attackPattern.coursesOfAction?.edges ?? [])
+                                .filter((n) => !!n) as NonNullableCoursesOfAction[])
+                                .map(
+                                  (courseOfActionEdge) => {
+                                    const courseOfAction = courseOfActionEdge.node;
+                                    const courseOfActionLink = `/dashboard/techniques/courses_of_action/${courseOfAction.id}`;
+                                    return (
+                                      <ListItem
+                                        key={courseOfAction.id}
+                                        classes={{ root: classes.nested2 }}
+                                        divider={true}
+                                        button={true}
+                                        dense={true}
+                                        component={Link}
+                                        to={courseOfActionLink}
+                                      >
+                                        <ListItemIcon>
+                                          <ProgressWrench
+                                            color="primary"
+                                            role="img"
                                           />
-                                        </ListItem>
-                                      );
-                                    },
-                                  )}
-                              </List>
-                            </Collapse>
+                                        </ListItemIcon>
+                                        <ListItemText
+                                          primary={courseOfAction.name}
+                                          secondary={
+                                            courseOfAction.description
+                                            && courseOfAction.description
+                                              .length > 0 ? (
+                                                <MarkdownDisplay
+                                                  content={
+                                                      courseOfAction.description
+                                                    }
+                                                  remarkGfmPlugin={true}
+                                                  commonmark={true}
+                                                ></MarkdownDisplay>
+                                              ) : (
+                                                t_i18n(
+                                                  'No description of this course of action',
+                                                )
+                                              )
+                                          }
+                                        />
+                                      </ListItem>
+                                    );
+                                  },
+                                )}
+                            </List>
+                          </Collapse>
                           )}
                         </div>
                       );
