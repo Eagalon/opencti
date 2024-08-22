@@ -1,9 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import {
-  StixDomainObjectAttackPatternsKillChainContainer_data$data,
-} from '@components/common/stix_domain_objects/__generated__/StixDomainObjectAttackPatternsKillChainContainer_data.graphql';
 import AttackPatternsMatrixLines, { attackPatternsMatrixLinesQuery } from '@components/techniques/attack_patterns/AttackPatternsMatrixLines';
-import { NarrativesLinesPaginationQuery$variables } from '@components/techniques/narratives/__generated__/NarrativesLinesPaginationQuery.graphql';
 import ToolBar from '@components/data/ToolBar';
 import { AttackPatternsMatrixLineDummy } from '@components/techniques/attack_patterns/AttackPatternsMatrixLine';
 import {
@@ -15,7 +11,7 @@ import { AttackPatternsMatrixLine_node$data } from '@components/techniques/attac
 import useEntityToggle from '../../../../utils/hooks/useEntityToggle';
 import ListLines from '../../../../components/list_lines/ListLines';
 import { usePaginationLocalStorage } from '../../../../utils/hooks/useLocalStorage';
-import { emptyFilterGroup, useBuildEntityTypeBasedFilterContext } from '../../../../utils/filters/filtersUtils';
+import { emptyFilterGroup, isFilterGroupNotEmpty, useRemoveIdAndIncorrectKeysFromFilterGroupObject } from '../../../../utils/filters/filtersUtils';
 import useQueryLoading from '../../../../utils/hooks/useQueryLoading';
 import Security from '../../../../utils/Security';
 import { KNOWLEDGE_KNPARTICIPATE, KNOWLEDGE_KNUPDATE } from '../../../../utils/hooks/useGranted';
@@ -24,17 +20,17 @@ import useHelper from '../../../../utils/hooks/useHelper';
 const LOCAL_STORAGE_KEY = 'StixDomainObjectAttackPatternsKillChainMatrixInline';
 
 interface StixDomainObjectAttackPatternsKillChainMatrixProps {
-  data: StixDomainObjectAttackPatternsKillChainContainer_data$data;
+  stixDomainObjectId: string;
 }
 
 const StixDomainObjectAttackPatternsKillChainMatrixInline: FunctionComponent<StixDomainObjectAttackPatternsKillChainMatrixProps> = (
   {
-    data,
+    stixDomainObjectId,
   },
 ) => {
   const { isFeatureEnable } = useHelper();
   const isFABReplaced = isFeatureEnable('FAB_REPLACEMENT');
-  const { viewStorage, helpers, paginationOptions } = usePaginationLocalStorage<NarrativesLinesPaginationQuery$variables>(
+  const { viewStorage, helpers, paginationOptions } = usePaginationLocalStorage<AttackPatternsMatrixLinesPaginationQuery$variables>(
     LOCAL_STORAGE_KEY,
     {
       searchTerm: '',
@@ -53,7 +49,6 @@ const StixDomainObjectAttackPatternsKillChainMatrixInline: FunctionComponent<Sti
     orderAsc,
     filters,
   } = viewStorage;
-  const attackPatterns = (data.attackPatterns?.edges ?? []).map((n) => n.node);
 
   const {
     onToggleEntity,
@@ -65,7 +60,21 @@ const StixDomainObjectAttackPatternsKillChainMatrixInline: FunctionComponent<Sti
     handleToggleSelectAll,
   } = useEntityToggle<AttackPatternsMatrixLine_node$data>(LOCAL_STORAGE_KEY);
 
-  const contextFilters = useBuildEntityTypeBasedFilterContext('Attack-Pattern', filters);
+  const userFilters = useRemoveIdAndIncorrectKeysFromFilterGroupObject(filters, ['Attack-Pattern']);
+  const contextFilters = {
+    mode: 'and',
+    filters: [
+      { key: 'entity_type', values: ['Attack-Pattern'], mode: 'or', operator: 'eq' },
+      {
+        key: 'regardingOf',
+        values: [
+          { key: 'id', values: [stixDomainObjectId] },
+        ],
+      },
+    ],
+    filterGroups: userFilters && isFilterGroupNotEmpty(userFilters) ? [userFilters] : [],
+  };
+
   const queryPaginationOptions = {
     ...paginationOptions,
     filters: contextFilters,
@@ -107,8 +116,7 @@ const StixDomainObjectAttackPatternsKillChainMatrixInline: FunctionComponent<Sti
       isSortable: true,
     },
   };
-  console.log('data in StixDomainObjectAttackPatternsKillChainMatrixInline', data);
-  console.log('attackPatterns in StixDomainObjectAttackPatternsKillChainMatrixInline', attackPatterns);
+
   return (
     <>
       <ListLines
@@ -137,13 +145,10 @@ const StixDomainObjectAttackPatternsKillChainMatrixInline: FunctionComponent<Sti
                 }
         >
           <AttackPatternsMatrixLines
-            attackPatterns={attackPatterns}
             queryRef={queryRef}
             paginationOptions={queryPaginationOptions}
             dataColumns={dataColumns}
             onLabelClick={helpers.handleAddFilter}
-            numberOfSelectedElements={numberOfSelectedElements}
-            handleClearSelectedElements={handleClearSelectedElements}
             selectedElements={selectedElements}
             deSelectedElements={deSelectedElements}
             onToggleEntity={onToggleEntity}

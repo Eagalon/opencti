@@ -27,7 +27,7 @@ interface StixDomainObjectAttackPatternsKillChainProps {
   availableFilterKeys: string[];
 }
 
-const stixDomainObjectAttackPatternsKillChainContainerFragment = graphql`
+export const stixDomainObjectAttackPatternsKillChainContainerFragment = graphql`
   fragment StixDomainObjectAttackPatternsKillChainContainer_data on Query
   @argumentDefinitions(
     search: { type: "String" }
