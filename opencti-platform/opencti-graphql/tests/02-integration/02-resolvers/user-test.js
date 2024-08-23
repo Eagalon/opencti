@@ -705,6 +705,28 @@ describe('User has no settings capability and is organization admin query behavi
   let userEditorId;
   let testOrganizationId;
   let amberGroupId;
+  /*  beforeAll(async () => {
+    // Need to add granted_groups to TEST_ORGANIZATION because of line 533 in domain/user.js
+    amberGroupId = await getGroupIdByName(AMBER_GROUP.name);
+
+    const UPDATE_QUERY = gql`
+      mutation OrganizationEdit($id: ID!, $input: [EditInput]!) {
+        organizationFieldPatch(id: $id, input: $input) {
+          id
+          name
+          grantable_groups {
+            id
+          }
+        }
+      }
+    `;
+    const queryResult = await adminQuery({
+      query: UPDATE_QUERY,
+      variables: { id: testOrganizationId, input: { key: 'grantable_groups', value: [amberGroupId] } },
+    });
+    expect(queryResult.data.organizationFieldPatch.grantable_groups.length).toEqual(1);
+    expect(queryResult.data.organizationFieldPatch.grantable_groups[0]).toEqual({ id: amberGroupId });
+  }); */
   afterAll(async () => {
     it('should remove the capability to administrate the Organization', async () => {
       const ORGA_ADMIN_DELETE_QUERY = gql`
@@ -714,7 +736,7 @@ describe('User has no settings capability and is organization admin query behavi
           }
         }
       `;
-      const queryResult = await queryAsAdmin({
+      const queryResult = await adminQuery({
         query: ORGA_ADMIN_DELETE_QUERY,
         variables: {
           id: testOrganizationId,
@@ -726,7 +748,7 @@ describe('User has no settings capability and is organization admin query behavi
       expect(queryResult.data.organizationAdminRemove.id).toEqual(testOrganizationId);
 
       // Check that USER_EDITOR is not any more Organization administrator
-      const editorUserQueryResult = await queryAsAdmin({ query: READ_QUERY, variables: { id: userEditorId } });
+      const editorUserQueryResult = await adminQuery({ query: READ_QUERY, variables: { id: userEditorId } });
       expect(editorUserQueryResult).not.toBeNull();
       expect(editorUserQueryResult.data.user).not.toBeNull();
       expect(editorUserQueryResult.data.user.length).toEqual();
@@ -744,7 +766,7 @@ describe('User has no settings capability and is organization admin query behavi
           }
         }
       `;
-      const queryResult = await queryAsAdmin({
+      const queryResult = await adminQuery({
         query: UPDATE_QUERY,
         variables: { id: testOrganizationId, input: { key: 'grantable_groups', value: [] } },
       });
@@ -760,8 +782,8 @@ describe('User has no settings capability and is organization admin query behavi
         }
       }
     `;
-    userEditorId = await getUserIdByEmail(USER_EDITOR.email); // USER_EDITOR is perfect because she has no settings capabilities and she is part of TEST_ORGANIZATION organization
-    const queryResult = await queryAsAdmin({
+    userEditorId = await getUserIdByEmail(USER_EDITOR.email); // USER_EDITOR is perfect because she has no settings capabilities and is part of TEST_ORGANIZATION
+    const queryResult = await adminQuery({
       query: ORGA_ADMIN_ADD_QUERY,
       variables: {
         id: TEST_ORGANIZATION.id,
@@ -773,7 +795,7 @@ describe('User has no settings capability and is organization admin query behavi
     expect(queryResult.data.organizationAdminAdd.standard_id).toEqual(TEST_ORGANIZATION.id);
 
     // Check that USER_EDITOR is Organization administrator
-    const editorUserQueryResult = await queryAsAdmin({ query: READ_QUERY, variables: { id: userEditorId } });
+    const editorUserQueryResult = await adminQuery({ query: READ_QUERY, variables: { id: userEditorId } });
     expect(editorUserQueryResult).not.toBeNull();
     expect(editorUserQueryResult.data.user).not.toBeNull();
     expect(editorUserQueryResult.data.user.capabilities.length).toEqual(5);
@@ -809,7 +831,7 @@ describe('User has no settings capability and is organization admin query behavi
         }
       }
     `;
-    const queryResult = await queryAsAdmin({
+    const queryResult = await adminQuery({
       query: UPDATE_QUERY,
       variables: { id: testOrganizationId, input: { key: 'grantable_groups', value: [amberGroupId] } },
     });
