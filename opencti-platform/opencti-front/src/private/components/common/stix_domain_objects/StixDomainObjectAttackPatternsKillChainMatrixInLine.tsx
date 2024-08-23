@@ -17,7 +17,7 @@ import Security from '../../../../utils/Security';
 import { KNOWLEDGE_KNPARTICIPATE, KNOWLEDGE_KNUPDATE } from '../../../../utils/hooks/useGranted';
 import useHelper from '../../../../utils/hooks/useHelper';
 
-const LOCAL_STORAGE_KEY = 'StixDomainObjectAttackPatternsKillChainMatrixInline';
+const LOCAL_STORAGE_KEY = 'stixDomainObjectAttackPatternsKillChainMatrixInline';
 
 interface StixDomainObjectAttackPatternsKillChainMatrixProps {
   stixDomainObjectId: string;
@@ -48,6 +48,7 @@ const StixDomainObjectAttackPatternsKillChainMatrixInline: FunctionComponent<Sti
     searchTerm,
     orderAsc,
     filters,
+    numberOfElements,
   } = viewStorage;
 
   const {
@@ -127,10 +128,13 @@ const StixDomainObjectAttackPatternsKillChainMatrixInline: FunctionComponent<Sti
         handleToggleSelectAll={handleToggleSelectAll}
         selectAll={selectAll}
         paginationOptions={queryPaginationOptions}
+        numberOfElements={numberOfElements}
         iconExtension={true}
-        createButton={isFABReplaced && <Security needs={[KNOWLEDGE_KNUPDATE, KNOWLEDGE_KNPARTICIPATE]}>
+        createButton={isFABReplaced && (
+        <Security needs={[KNOWLEDGE_KNUPDATE, KNOWLEDGE_KNPARTICIPATE]}>
           <AttackPatternCreation paginationOptions={queryPaginationOptions} />
-        </Security>}
+        </Security>
+        )}
       >
         {queryRef && (
         <React.Suspense
@@ -139,10 +143,14 @@ const StixDomainObjectAttackPatternsKillChainMatrixInline: FunctionComponent<Sti
               {Array(20)
                 .fill(0)
                 .map((_, idx) => (
-                  <AttackPatternsMatrixLineDummy key={idx} dataColumns={dataColumns} />
-                ))}
+                  <AttackPatternsMatrixLineDummy
+                    key={idx}
+                    dataColumns={dataColumns}
+                  />
+                ))
+              }
             </>
-                }
+          }
         >
           <AttackPatternsMatrixLines
             queryRef={queryRef}
